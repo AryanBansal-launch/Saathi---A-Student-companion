@@ -1,0 +1,48 @@
+#!/bin/bash
+BASE="/Users/aryan.bansal/Saarthi/saarthi"
+
+dirs=(
+  "app/(auth)/login"
+  "app/(auth)/register"
+  "app/(student)/explore"
+  "app/(student)/search"
+  "app/(student)/listing/[id]"
+  "app/(student)/saved"
+  "app/(student)/profile"
+  "app/(vendor)/dashboard"
+  "app/(vendor)/listings/new"
+  "app/(vendor)/listings/[id]/edit"
+  "app/(admin)/dashboard"
+  "app/(admin)/listings"
+  "app/(admin)/users"
+  "app/api/auth/[...nextauth]"
+  "app/api/listings/[id]"
+  "app/api/listings/nearby"
+  "app/api/listings/recommended"
+  "app/api/reviews/[listingId]"
+  "app/api/users/me"
+  "app/api/users/save/[listingId]"
+  "app/api/admin/listings/[id]/approve"
+  "app/api/admin/listings/pending"
+  "app/api/admin/users/[id]"
+  "app/api/admin/analytics"
+  "components/ui"
+  "components/layout"
+  "components/listings"
+  "components/map"
+  "components/search"
+  "components/reviews"
+  "components/ai"
+  "lib"
+  "models"
+  "hooks"
+  "store"
+  "types"
+  "public/assets"
+)
+
+for dir in "${dirs[@]}"; do
+  mkdir -p "$BASE/$dir"
+done
+
+echo "All directories created!"
