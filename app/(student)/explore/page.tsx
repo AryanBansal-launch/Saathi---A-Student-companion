@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { LayoutGrid, Map } from "lucide-react";
+import { LayoutGrid, Map, Loader2 } from "lucide-react";
 import FilterBar from "@/components/listings/FilterBar";
 import ListingGrid from "@/components/listings/ListingGrid";
 import MapView from "@/components/map/MapView";
@@ -12,7 +12,7 @@ import type { IListing, FilterOptions } from "@/types";
 
 const ITEMS_PER_PAGE = 12;
 
-export default function ExplorePage() {
+function ExploreContent() {
   const searchParams = useSearchParams();
   const categoryFromUrl = searchParams.get("category");
   const cityFromUrl = searchParams.get("city");
@@ -193,5 +193,19 @@ export default function ExplorePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ExplorePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <ExploreContent />
+    </Suspense>
   );
 }

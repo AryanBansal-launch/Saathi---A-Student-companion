@@ -13,6 +13,19 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+interface AnalyticsResponse {
+  totalUsers?: number;
+  totalVendors?: number;
+  totalListings?: number;
+  pendingListings?: number;
+  totalReviews?: number;
+}
+
+interface PendingResponse {
+  list?: unknown[];
+  listings?: unknown[];
+}
+
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -26,8 +39,8 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/admin/analytics").then((r) => (r.ok ? r.json() : {})),
-      fetch("/api/admin/listings/pending").then((r) => (r.ok ? r.json() : { list: [] })),
+      fetch("/api/admin/analytics").then((r) => (r.ok ? r.json() : {}) as Promise<AnalyticsResponse>),
+      fetch("/api/admin/listings/pending").then((r) => (r.ok ? r.json() : { list: [] }) as Promise<PendingResponse>),
     ])
       .then(([analytics, pending]) => {
         setStats({
@@ -37,7 +50,7 @@ export default function AdminDashboardPage() {
           pendingListings: analytics.pendingListings ?? 0,
           totalReviews: analytics.totalReviews ?? 0,
         });
-        setPendingListings(pending.listings ?? pending.list ?? []);
+        setPendingListings((pending.listings ?? pending.list ?? []) as any[]);
       })
       .catch(() => {})
       .finally(() => setLoading(false));

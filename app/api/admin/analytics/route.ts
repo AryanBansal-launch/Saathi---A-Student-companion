@@ -7,6 +7,8 @@ import Vendor from "@/models/Vendor";
 import Listing from "@/models/Listing";
 import Review from "@/models/Review";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);

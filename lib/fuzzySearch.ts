@@ -1,7 +1,7 @@
-import Fuse from "fuse.js";
+import Fuse, { type IFuseOptions } from "fuse.js";
 import { IListing } from "@/types";
 
-const fuseOptions: Fuse.IFuseOptions<IListing> = {
+const fuseOptions: IFuseOptions<IListing> = {
   keys: [
     { name: "title", weight: 0.4 },
     { name: "description", weight: 0.2 },

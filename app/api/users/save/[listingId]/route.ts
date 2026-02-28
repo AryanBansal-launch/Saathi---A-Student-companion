@@ -34,7 +34,7 @@ export async function POST(
     const listingObjectId = new mongoose.Types.ObjectId(listingId);
     const savedListings = user.savedListings || [];
     const index = savedListings.findIndex(
-      (id) => id.toString() === listingId
+      (id: mongoose.Types.ObjectId) => id.toString() === listingId
     );
 
     let saved: boolean;
@@ -59,7 +59,7 @@ export async function POST(
 
     return NextResponse.json({
       saved,
-      savedListings: savedListings.map((id) => id.toString()),
+      savedListings: savedListings.map((id: mongoose.Types.ObjectId) => id.toString()),
     });
   } catch (error) {
     console.error("Save listing error:", error);
