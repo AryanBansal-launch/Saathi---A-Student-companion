@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import type { IListing } from "@/types";
+import { getListingImage } from "@/lib/fallbackImages";
 
 const PRICE_UNIT_LABELS: Record<string, string> = {
   month: "/mo",
@@ -114,7 +115,9 @@ export default function RecommendationStrip({ city }: RecommendationStripProps) 
             No recommendations for this city yet.
           </p>
         ) : (
-          listings.map((listing, i) => (
+          listings.map((listing, i) => {
+            const imageUrl = getListingImage(listing.images, listing.category);
+            return (
             <Link key={listing._id} href={`/listing/${listing._id}`}>
               <motion.article
                 initial={{ opacity: 0, y: 8 }}
@@ -123,17 +126,13 @@ export default function RecommendationStrip({ city }: RecommendationStripProps) 
                 className="flex-shrink-0 w-[220px] rounded-xl overflow-hidden bg-surface border border-white/50 shadow-sm hover:shadow-lg hover:border-primary/20 transition-all group"
               >
                 <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-primary/20 via-secondary/10 to-accent/20">
-                  {listing.images?.[0] ? (
-                    <Image
-                      src={listing.images[0]}
-                      alt={listing.title}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      sizes="220px"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-secondary/20 to-accent/30" />
-                  )}
+                  <Image
+                    src={imageUrl}
+                    alt={listing.title}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    sizes="220px"
+                  />
                   <div className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-white font-heading font-bold text-xs shadow-md">
                     {Math.round(listing.saarthiScore ?? 0)}
                   </div>
@@ -149,7 +148,8 @@ export default function RecommendationStrip({ city }: RecommendationStripProps) 
                 </div>
               </motion.article>
             </Link>
-          ))
+          );
+          })
         )}
       </div>
     </section>

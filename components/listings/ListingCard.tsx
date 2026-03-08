@@ -6,6 +6,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Heart, Star, MapPin } from "lucide-react";
 import type { IListing, ServiceCategory } from "@/types";
+import { getListingImage } from "@/lib/fallbackImages";
 
 const CATEGORY_LABELS: Record<ServiceCategory, string> = {
   hostel: "Hostel",
@@ -60,7 +61,7 @@ export default function ListingCard({
     }
   };
 
-  const imageUrl = listing.images?.[0];
+  const imageUrl = getListingImage(listing.images, listing.category);
   const priceUnit = PRICE_UNIT_LABELS[listing.priceUnit] || "";
 
   return (
@@ -73,17 +74,13 @@ export default function ListingCard({
       >
         {/* Image */}
         <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-primary/20 via-secondary/10 to-accent/20">
-          {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt={listing.title}
-              fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/25 via-secondary/15 to-accent/25" />
-          )}
+          <Image
+            src={imageUrl}
+            alt={listing.title}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
 
           {/* Category badge */}
           <span className="absolute top-3 left-3 px-3 py-1.5 rounded-xl bg-surface/95 backdrop-blur-sm text-xs font-semibold text-foreground shadow-sm border border-white/40">

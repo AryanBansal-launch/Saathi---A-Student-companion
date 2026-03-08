@@ -15,6 +15,7 @@ import {
   Lock,
 } from "lucide-react";
 import type { IListing, ServiceCategory } from "@/types";
+import { getFallbackImage } from "@/lib/fallbackImages";
 
 const CATEGORY_LABELS: Record<ServiceCategory, string> = {
   hostel: "Hostel",
@@ -43,7 +44,10 @@ export default function ListingDetail({ listing }: ListingDetailProps) {
   const { data: session } = useSession();
   const router = useRouter();
 
-  const images = listing.images?.length ? listing.images : [null];
+  // Use actual images or fallback to category-relevant images
+  const images = listing.images?.length 
+    ? listing.images 
+    : [getFallbackImage(listing.category)];
   const priceUnit = PRICE_UNIT_LABELS[listing.priceUnit] ?? "";
 
   const whatsappLink = listing.contactPhone
@@ -72,26 +76,22 @@ export default function ListingDetail({ listing }: ListingDetailProps) {
       <div className="mb-8">
         <div className="relative aspect-[21/9] overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 via-secondary/10 to-accent/20">
           <AnimatePresence mode="wait">
-            {images[selectedImageIndex] ? (
-              <motion.div
-                key={selectedImageIndex}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0"
-              >
-                <Image
-                  src={images[selectedImageIndex]!}
-                  alt={`${listing.title} - Image ${selectedImageIndex + 1}`}
-                  fill
-                  className="object-cover"
-                  priority
-                  sizes="100vw"
-                />
-              </motion.div>
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-secondary/20 to-accent/30" />
-            )}
+            <motion.div
+              key={selectedImageIndex}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0"
+            >
+              <Image
+                src={images[selectedImageIndex]}
+                alt={`${listing.title} - Image ${selectedImageIndex + 1}`}
+                fill
+                className="object-cover"
+                priority
+                sizes="100vw"
+              />
+            </motion.div>
           </AnimatePresence>
         </div>
 
