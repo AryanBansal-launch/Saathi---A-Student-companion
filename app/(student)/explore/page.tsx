@@ -8,6 +8,7 @@ import FilterBar from "@/components/listings/FilterBar";
 import ListingGrid from "@/components/listings/ListingGrid";
 import MapView from "@/components/map/MapView";
 import { useStore } from "@/store/useStore";
+import { useLocationContext } from "@/contexts/LocationContext";
 import type { IListing, FilterOptions } from "@/types";
 
 const ITEMS_PER_PAGE = 12;
@@ -16,6 +17,7 @@ function ExploreContent() {
   const searchParams = useSearchParams();
   const categoryFromUrl = searchParams.get("category");
   const cityFromUrl = searchParams.get("city");
+  const { city: detectedCity, loading: locationLoading } = useLocationContext();
 
   const {
     filters,
@@ -41,13 +43,11 @@ function ExploreContent() {
       setIsLoading(true);
       try {
         const params = new URLSearchParams();
-        // Use URL params when present so first load respects ?city= and ?category=
-        const category = categoryFromUrl || filters.category;
-        const city = cityFromUrl || filters.city;
-        if (category) params.set("category", category);
+        // Always use filter state as source of truth (URL only used for initial load)
+        if (filters.category) params.set("category", filters.category);
         if (filters.minPrice) params.set("minPrice", filters.minPrice.toString());
         if (filters.maxPrice) params.set("maxPrice", filters.maxPrice.toString());
-        if (city) params.set("city", city);
+        if (filters.city) params.set("city", filters.city);
         if (filters.rating) params.set("rating", filters.rating.toString());
         if (filters.sortBy) params.set("sortBy", filters.sortBy ?? "saarthiScore");
         params.set("page", page.toString());
@@ -74,8 +74,6 @@ function ExploreContent() {
       }
     },
     [
-      categoryFromUrl,
-      cityFromUrl,
       filters.category,
       filters.minPrice,
       filters.maxPrice,
@@ -88,18 +86,42 @@ function ExploreContent() {
     ]
   );
 
+  // Track if we've already initialized to prevent overriding user selections
+  const [initialized, setInitialized] = useState(false);
+
   useEffect(() => {
+    // Wait for location to load if there's no URL city
+    if (!cityFromUrl && locationLoading) {
+      return;
+    }
+
+    // Only run once on mount
+    if (initialized) return;
+
     const updates: Partial<FilterOptions> = {};
+    
+    // Always respect URL parameters (highest priority)
     if (categoryFromUrl) updates.category = categoryFromUrl as FilterOptions["category"];
-    if (cityFromUrl) updates.city = cityFromUrl;
+    if (cityFromUrl) {
+      updates.city = cityFromUrl;
+    } else if (detectedCity && !filters.city) {
+      // Only auto-apply detected city if no URL city and no existing filter
+      updates.city = detectedCity;
+    }
+    
     if (Object.keys(updates).length > 0) {
       setFilters(updates);
     }
-  }, [categoryFromUrl, cityFromUrl, setFilters]);
+    
+    setInitialized(true);
+  }, [categoryFromUrl, cityFromUrl, detectedCity, filters.city, setFilters, initialized, locationLoading]);
 
+  // Fetch listings only after initialization is complete
   useEffect(() => {
-    fetchListings(1);
-  }, [fetchListings]);
+    if (initialized) {
+      fetchListings(1);
+    }
+  }, [fetchListings, initialized]);
 
   const handlePageChange = (newPage: number) => {
     fetchListings(newPage);

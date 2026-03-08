@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import {
   Star,
   MapPin,
@@ -10,6 +12,7 @@ import {
   MessageCircle,
   CheckCircle,
   XCircle,
+  Lock,
 } from "lucide-react";
 import type { IListing, ServiceCategory } from "@/types";
 
@@ -37,6 +40,8 @@ interface ListingDetailProps {
 export default function ListingDetail({ listing }: ListingDetailProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showPhone, setShowPhone] = useState(false);
+  const { data: session } = useSession();
+  const router = useRouter();
 
   const images = listing.images?.length ? listing.images : [null];
   const priceUnit = PRICE_UNIT_LABELS[listing.priceUnit] ?? "";
@@ -44,6 +49,22 @@ export default function ListingDetail({ listing }: ListingDetailProps) {
   const whatsappLink = listing.contactPhone
     ? `https://wa.me/${listing.contactPhone.replace(/\D/g, "")}`
     : null;
+
+  const handleRevealPhone = () => {
+    if (!session) {
+      router.push("/login?redirect=" + encodeURIComponent(window.location.pathname));
+      return;
+    }
+    setShowPhone(true);
+  };
+
+  const handleWhatsAppClick = (e: React.MouseEvent) => {
+    if (!session) {
+      e.preventDefault();
+      router.push("/login?redirect=" + encodeURIComponent(window.location.pathname));
+      return;
+    }
+  };
 
   return (
     <div className="font-body">
@@ -203,24 +224,42 @@ export default function ListingDetail({ listing }: ListingDetailProps) {
         <h2 className="font-heading font-semibold text-foreground mb-4">
           Contact
         </h2>
+        {!session && (
+          <div className="mb-4 p-4 rounded-xl bg-primary/5 border border-primary/20">
+            <div className="flex items-start gap-3">
+              <Lock className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-foreground text-sm mb-1">
+                  Login required to view contact details
+                </p>
+                <p className="text-muted text-sm">
+                  Please sign in to reveal phone number and WhatsApp contact
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="flex flex-wrap gap-3">
           {listing.contactPhone && (
             <>
               <button
-                onClick={() => setShowPhone(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white font-medium hover:bg-primary/90 transition-colors"
+                onClick={handleRevealPhone}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={!session ? "Login required" : ""}
               >
-                <Phone className="h-4 w-4" />
-                {showPhone ? listing.contactPhone : "Reveal phone"}
+                {!session ? <Lock className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
+                {showPhone && session ? listing.contactPhone : "Reveal phone"}
               </button>
               {whatsappLink && (
                 <a
                   href={whatsappLink}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={handleWhatsAppClick}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] text-white font-medium hover:bg-[#20bd5a] transition-colors"
+                  title={!session ? "Login required" : ""}
                 >
-                  <MessageCircle className="h-4 w-4" />
+                  {!session ? <Lock className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
                   WhatsApp
                 </a>
               )}

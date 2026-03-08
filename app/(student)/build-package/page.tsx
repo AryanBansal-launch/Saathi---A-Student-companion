@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Package,
@@ -15,6 +17,8 @@ import {
   Home,
   ChevronRight,
   Sparkles,
+  Lock,
+  LogIn,
 } from "lucide-react";
 import type {
   BuildPackageResponse,
@@ -125,6 +129,8 @@ function PackageCard({
 }
 
 export default function BuildPackagePage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [city, setCity] = useState("");
   const [totalBudget, setTotalBudget] = useState("");
   const [foodPreference, setFoodPreference] = useState<FoodPreference>("any");
@@ -134,6 +140,52 @@ export default function BuildPackagePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<BuildPackageResponse | null>(null);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login?redirect=/build-package");
+    }
+  }, [status, router]);
+
+  // Show loading while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show login prompt if not authenticated
+  if (!session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full text-center"
+        >
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary mx-auto mb-6">
+            <Lock className="h-10 w-10" />
+          </div>
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold text-foreground mb-3">
+            Login Required
+          </h1>
+          <p className="font-body text-muted mb-8">
+            Please sign in to access the Build Package feature and get personalized recommendations.
+          </p>
+          <Link
+            href="/login?redirect=/build-package"
+            className="btn-primary inline-flex items-center gap-2"
+          >
+            <LogIn className="h-5 w-5" />
+            Sign In
+          </Link>
+        </motion.div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

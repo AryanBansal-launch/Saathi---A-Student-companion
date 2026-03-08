@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Listing from "@/models/Listing";
+import { createCityRegex } from "@/lib/cityNormalizer";
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,7 +36,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (category) query.category = category;
-    if (city) query["location.city"] = { $regex: new RegExp(city, "i") };
+    if (city) {
+      const cityRegex = createCityRegex(city);
+      if (cityRegex) {
+        query["location.city"] = { $regex: cityRegex };
+      }
+    }
     if (minPrice) query.price = { ...(query.price as object || {}), $gte: parseFloat(minPrice) };
     if (maxPrice) query.price = { ...(query.price as object || {}), $lte: parseFloat(maxPrice) };
     if (rating) query.rating = { $gte: parseFloat(rating) };

@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Filter, X, ChevronDown, Star } from "lucide-react";
+import { Filter, X, ChevronDown, Star, MapPin } from "lucide-react";
 import { useStore } from "@/store/useStore";
+import { useLocationContext } from "@/contexts/LocationContext";
 import type { ServiceCategory, FilterOptions } from "@/types";
 
 const CATEGORIES: (ServiceCategory | "all")[] = [
@@ -36,6 +37,19 @@ const SORT_OPTIONS = [
   { value: "price_desc", label: "Price: High to Low" },
   { value: "rating", label: "Rating" },
 ] as const;
+
+const POPULAR_CITIES = [
+  "Delhi",
+  "Mumbai",
+  "Bangalore",
+  "Pune",
+  "Hyderabad",
+  "Chennai",
+  "Kolkata",
+  "Ahmedabad",
+  "Jaipur",
+  "Lucknow",
+];
 
 export default function FilterBar() {
   const { filters, setFilters, resetFilters } = useStore();
@@ -119,9 +133,109 @@ function FilterContent({
 }: FilterContentProps) {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
+  const [cityOpen, setCityOpen] = useState(false);
+  const { city: detectedCity, setCity: setDetectedCity } = useLocationContext();
+
+  const displayCity = filters.city || "";
 
   return (
     <>
+      {/* City dropdown */}
+      <div className="relative flex-1 min-w-[200px] max-w-xs">
+        <button
+          onClick={() => {
+            setCityOpen(!cityOpen);
+            setCategoryOpen(false);
+            setSortOpen(false);
+          }}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-background border border-muted/20 hover:border-primary/30 transition-colors w-full justify-between"
+        >
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <MapPin className="h-4 w-4 text-muted flex-shrink-0" />
+            <span className="text-sm font-medium text-foreground truncate">
+              {displayCity || "Select City"}
+            </span>
+          </div>
+          <ChevronDown
+            className={`h-4 w-4 text-muted transition-transform flex-shrink-0 ${cityOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+        <AnimatePresence>
+          {cityOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setCityOpen(false)}
+                aria-hidden="true"
+              />
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="absolute left-0 top-full mt-1 z-50 w-full rounded-xl bg-surface border border-muted/20 shadow-lg py-1 max-h-60 overflow-y-auto"
+              >
+                {detectedCity && (
+                  <>
+                    <div className="px-3 py-1.5 text-xs font-medium text-muted uppercase tracking-wider">
+                      Detected
+                    </div>
+                    <button
+                      onClick={() => {
+                        setFilters({ city: detectedCity });
+                        setDetectedCity(detectedCity); // Update context too
+                        setCityOpen(false);
+                        onClose?.();
+                      }}
+                      className={`w-full px-4 py-2.5 text-left text-sm hover:bg-primary/5 flex items-center gap-2 ${
+                        filters.city === detectedCity
+                          ? "text-primary font-medium bg-primary/5"
+                          : "text-foreground"
+                      }`}
+                    >
+                      <MapPin className="h-3.5 w-3.5" />
+                      {detectedCity}
+                    </button>
+                    <div className="h-px bg-muted/20 my-1" />
+                  </>
+                )}
+                <div className="px-3 py-1.5 text-xs font-medium text-muted uppercase tracking-wider">
+                  Popular Cities
+                </div>
+                {POPULAR_CITIES.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => {
+                      setFilters({ city: c });
+                      setDetectedCity(c); // Update context to persist the manual selection
+                      setCityOpen(false);
+                      onClose?.();
+                    }}
+                    className={`w-full px-4 py-2.5 text-left text-sm hover:bg-primary/5 ${
+                      filters.city === c
+                        ? "text-primary font-medium bg-primary/5"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+                <div className="h-px bg-muted/20 my-1" />
+                <button
+                  onClick={() => {
+                    setFilters({ city: undefined });
+                    setCityOpen(false);
+                    onClose?.();
+                  }}
+                  className="w-full px-4 py-2.5 text-left text-sm hover:bg-secondary/5 text-secondary"
+                >
+                  Clear City Filter
+                </button>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      </div>
+
       {/* Category dropdown */}
       <div className="relative">
         <button

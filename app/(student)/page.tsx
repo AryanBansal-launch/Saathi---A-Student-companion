@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -18,8 +18,11 @@ import {
   ArrowRight,
   Quote,
   Package,
+  Navigation,
 } from "lucide-react";
 import RecommendationStrip from "@/components/ai/RecommendationStrip";
+import LocationBanner from "@/components/location/LocationBanner";
+import { useLocationContext } from "@/contexts/LocationContext";
 
 const CATEGORY_INFO: Record<
   string,
@@ -81,9 +84,18 @@ const TESTIMONIALS = [
 
 export default function HomePage() {
   const [cityInput, setCityInput] = useState("");
+  const { city: detectedCity, requestLocation, loading } = useLocationContext();
+
+  useEffect(() => {
+    if (detectedCity && !cityInput) {
+      setCityInput(detectedCity);
+    }
+  }, [detectedCity, cityInput]);
 
   return (
     <div className="min-h-screen">
+      <LocationBanner />
+      
       {/* Hero */}
       <section className="relative overflow-hidden px-4 py-24 sm:py-32 lg:py-40">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.06] via-background to-secondary/[0.06]" />
@@ -130,10 +142,19 @@ export default function HomePage() {
                 type="text"
                 value={cityInput}
                 onChange={(e) => setCityInput(e.target.value)}
-                placeholder="Enter your city..."
+                placeholder={detectedCity ? detectedCity : "Enter your city..."}
                 list="cities"
-                className="w-full pl-12 pr-4 py-3.5 rounded-2xl border-2 border-white/80 bg-surface text-foreground placeholder:text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-card font-body transition-all"
+                className="w-full pl-12 pr-14 py-3.5 rounded-2xl border-2 border-white/80 bg-surface text-foreground placeholder:text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-card font-body transition-all"
               />
+              {!detectedCity && !loading && (
+                <button
+                  onClick={requestLocation}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors"
+                  title="Detect my location"
+                >
+                  <Navigation className="h-4 w-4" />
+                </button>
+              )}
               <datalist id="cities">
                 {POPULAR_CITIES.map((c) => (
                   <option key={c} value={c} />
@@ -280,7 +301,7 @@ export default function HomePage() {
       {/* AI Recommendations */}
       <section className="px-4 py-16 sm:py-20">
         <div className="mx-auto max-w-6xl">
-          <RecommendationStrip city="Delhi" />
+          <RecommendationStrip city={detectedCity || cityInput || "Delhi"} />
         </div>
       </section>
 

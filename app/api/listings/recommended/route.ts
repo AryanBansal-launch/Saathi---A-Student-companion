@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Listing from "@/models/Listing";
 import { getRecommendations } from "@/lib/recommendations";
+import { createCityRegex } from "@/lib/cityNormalizer";
 
 export const dynamic = "force-dynamic";
 
@@ -47,8 +48,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const cityRegex = createCityRegex(city);
     const listings = await Listing.find({
-      "location.city": { $regex: new RegExp(city, "i") },
+      "location.city": cityRegex ? { $regex: cityRegex } : { $regex: new RegExp(city, "i") },
       approved: true,
       availability: true,
     })

@@ -2,6 +2,7 @@ import Interaction from "@/models/Interaction";
 import Listing from "@/models/Listing";
 import User from "@/models/User";
 import { SaarthiScore } from "@/types";
+import { createCityRegex } from "@/lib/cityNormalizer";
 
 function getDaysAgo(date: Date): number {
   return Math.floor((Date.now() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
@@ -34,8 +35,9 @@ export async function getRecommendations(
   const interactions = await Interaction.find({ userId });
   const user = await User.findById(userId);
 
+  const cityRegex = createCityRegex(city);
   const query: any = {
-    "location.city": { $regex: new RegExp(city, "i") },
+    "location.city": cityRegex ? { $regex: cityRegex } : { $regex: new RegExp(city, "i") },
     approved: true,
     availability: true,
   };
