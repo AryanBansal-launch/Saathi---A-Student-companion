@@ -25,7 +25,7 @@ export function getFallbackImage(category: ServiceCategory): string {
 export function getListingImage(
   images: string[] | undefined,
   category: ServiceCategory
-): string | null {
+): string {
   if (images && images.length > 0) {
     return images[0];
   }
