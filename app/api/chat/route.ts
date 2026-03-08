@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const SYSTEM_PROMPT = `You are Saarthi's friendly assistant. Saarthi is a platform that helps students and bachelors find essential services in a new city: hostels, mess/dabba (tiffin), bike rental, accommodation, laundry, furniture, books, and more.
 
@@ -13,10 +12,10 @@ Your role:
 
 export async function POST(request: NextRequest) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "Chat is not configured. Add GEMINI_API_KEY to enable." },
+        { error: "Chat is not configured. Add OPENROUTER_API_KEY to enable." },
         { status: 503 }
       );
     }
@@ -31,26 +30,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    // Prefer env override; default to a current model (gemini-1.5-flash is deprecated)
-    const modelId = process.env.GEMINI_CHAT_MODEL || "gemini-2.0-flash";
-    const model = genAI.getGenerativeModel({
-      model: modelId,
-      systemInstruction: SYSTEM_PROMPT,
-    });
-
-    const chat = model.startChat({
-      history: history.slice(-10).map((h) => ({
-        role: h.role === "user" ? "user" : "model",
-        parts: [{ text: h.content }],
+    const messages = [
+      { role: "system", content: SYSTEM_PROMPT },
+      ...history.slice(-10).map((h) => ({
+        role: h.role === "user" ? "user" : "assistant",
+        content: h.content,
       })),
+      { role: "user", content: message.trim() },
+    ];
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": process.env.NEXTAUTH_URL || "http://localhost:3000",
+        "X-Title": "Saarthi Chat",
+      },
+      body: JSON.stringify({
+        model: "openrouter/free",
+        messages,
+      }),
     });
 
-    const result = await chat.sendMessage(message.trim());
-    const response = result.response;
-    const text = response.text();
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("OpenRouter API error:", errorData);
+      return NextResponse.json(
+        { error: "Failed to get a response. Please try again." },
+        { status: 500 }
+      );
+    }
 
-    return NextResponse.json({ text: text || "I couldn't generate a response. Try asking something like: I need a mess in Delhi under ₹3000." });
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content || "I couldn't generate a response. Try asking something like: I need a mess in Delhi under ₹3000.";
+
+    return NextResponse.json({ text });
   } catch (error) {
     console.error("Chat API error:", error);
     return NextResponse.json(
