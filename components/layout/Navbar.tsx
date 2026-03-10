@@ -33,6 +33,7 @@ const navLinks = [
   { href: "/explore", label: "Explore", icon: Compass },
   { href: "/build-package", label: "Build package", icon: Package },
   { href: "/search", label: "Search", icon: Search },
+  { href: "/about", label: "About", icon: User },
 ];
 
 export default function Navbar() {
